@@ -223,44 +223,56 @@ html{scroll-padding-top:76px}
       <div class="bot-say" id="say">hi! 👋</div>
       <svg id="bot" viewBox="0 0 400 460">
         <defs>
-          <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset="1" stop-color="#c9d0d9"/></linearGradient>
-          <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a2129"/><stop offset="1" stop-color="#07090c"/></linearGradient>
+          <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f8fa"/><stop offset=".6" stop-color="#dde2e8"/><stop offset="1" stop-color="#b9c1cc"/></linearGradient>
+          <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b232c"/><stop offset="1" stop-color="#06080b"/></linearGradient>
+          <radialGradient id="hover"><stop offset="0" stop-color="#c6f432" stop-opacity=".55"/><stop offset="1" stop-color="#c6f432" stop-opacity="0"/></radialGradient>
+          <clipPath id="visorClip"><rect x="110" y="104" width="180" height="120" rx="48"/></clipPath>
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
-        <ellipse id="shadow" cx="200" cy="440" rx="95" ry="12" fill="#000" opacity=".45"/>
+        <ellipse id="shadow" cx="200" cy="440" rx="95" ry="14" fill="url(#hover)"/>
         <g id="body">
+          <!-- hover thruster -->
+          <path d="M176 408 h48 l-8 14 h-32 z" fill="#2a313b"/>
+          <ellipse cx="200" cy="424" rx="14" ry="4" fill="#c6f432" filter="url(#glow)" opacity=".9"><animate attributeName="opacity" values=".9;.4;.9" dur=".9s" repeatCount="indefinite"/></ellipse>
           <!-- arms -->
-          <g id="armL" transform="rotate(0 128 300)">
-            <rect x="96" y="292" width="34" height="96" rx="17" fill="url(#shell)"/>
-            <circle cx="113" cy="392" r="15" fill="#2a313b"/>
+          <g id="armL">
+            <rect x="98" y="300" width="30" height="80" rx="15" fill="url(#shell)"/>
+            <path d="M104 378 q-6 16 2 24 M122 378 q6 16 -2 24" stroke="#2a313b" stroke-width="7" stroke-linecap="round" fill="none"/>
+            <circle cx="113" cy="300" r="15" fill="#2a313b"/><circle cx="113" cy="300" r="6" fill="none" stroke="#c6f432" stroke-width="2.5"/>
           </g>
-          <g id="armR" transform="rotate(0 272 300)">
-            <rect x="270" y="292" width="34" height="96" rx="17" fill="url(#shell)"/>
-            <circle cx="287" cy="392" r="15" fill="#2a313b"/>
+          <g id="armR">
+            <rect x="272" y="300" width="30" height="80" rx="15" fill="url(#shell)"/>
+            <path d="M278 378 q-6 16 2 24 M296 378 q6 16 -2 24" stroke="#2a313b" stroke-width="7" stroke-linecap="round" fill="none"/>
+            <circle cx="287" cy="300" r="15" fill="#2a313b"/><circle cx="287" cy="300" r="6" fill="none" stroke="#c6f432" stroke-width="2.5"/>
           </g>
           <!-- torso -->
-          <rect x="128" y="276" width="144" height="134" rx="40" fill="url(#shell)"/>
-          <rect x="158" y="306" width="84" height="54" rx="14" fill="#0d1116"/>
-          <circle cx="178" cy="333" r="6" fill="#c6f432" filter="url(#glow)"><animate attributeName="opacity" values="1;.3;1" dur="1.4s" repeatCount="indefinite"/></circle>
-          <circle cx="200" cy="333" r="6" fill="#ff8a3d" filter="url(#glow)"><animate attributeName="opacity" values=".3;1;.3" dur="1.4s" repeatCount="indefinite"/></circle>
-          <circle cx="222" cy="333" r="6" fill="#5ad1ff" filter="url(#glow)"><animate attributeName="opacity" values="1;.4;1" dur="2.1s" repeatCount="indefinite"/></circle>
-          <rect x="182" y="378" width="36" height="6" rx="3" fill="#9aa3ae"/>
-          <rect x="182" y="258" width="36" height="24" rx="8" fill="#2a313b"/>
+          <rect x="128" y="276" width="144" height="134" rx="44" fill="url(#shell)"/>
+          <path d="M140 300 q60 -18 120 0" stroke="#fff" stroke-opacity=".6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="154" y="304" width="92" height="56" rx="14" fill="#0b0e12" stroke="#2a313b"/>
+          <polyline points="162,334 176,334 182,320 190,348 198,326 206,340 214,330 222,334 238,334" fill="none" stroke="#c6f432" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)" stroke-dasharray="120" stroke-dashoffset="120"><animate attributeName="stroke-dashoffset" values="120;0;-120" dur="2.4s" repeatCount="indefinite"/></polyline>
+          <circle cx="166" cy="315" r="3" fill="#ff8a3d"><animate attributeName="opacity" values="1;.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
+          <circle cx="176" cy="315" r="3" fill="#5ad1ff"/>
+          <g fill="#9aa3ae"><rect x="176" y="376" width="48" height="4" rx="2"/><rect x="184" y="386" width="32" height="4" rx="2"/></g>
+          <rect x="184" y="256" width="32" height="26" rx="8" fill="#2a313b"/>
           <!-- head -->
           <g id="head">
             <g id="antenna">
-              <line x1="200" y1="78" x2="200" y2="40" stroke="#9aa3ae" stroke-width="5" stroke-linecap="round"/>
-              <circle id="bulb" cx="200" cy="34" r="10" fill="#c6f432" filter="url(#glow)"/>
+              <path d="M200 78 L200 56 L212 44" stroke="#9aa3ae" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle id="bulb" cx="214" cy="40" r="8" fill="#c6f432" filter="url(#glow)"><animate attributeName="r" values="8;10;8" dur="1.6s" repeatCount="indefinite"/></circle>
             </g>
-            <circle cx="84" cy="168" r="20" fill="#2a313b"/>
-            <circle cx="316" cy="168" r="20" fill="#2a313b"/>
-            <rect x="88" y="74" width="224" height="188" rx="62" fill="url(#shell)"/>
+            <g><circle cx="86" cy="168" r="24" fill="#2a313b"/><circle cx="86" cy="168" r="11" fill="none" stroke="#c6f432" stroke-width="3" filter="url(#glow)"/></g>
+            <g><circle cx="314" cy="168" r="24" fill="#2a313b"/><circle cx="314" cy="168" r="11" fill="none" stroke="#c6f432" stroke-width="3" filter="url(#glow)"/></g>
+            <rect x="88" y="74" width="224" height="188" rx="64" fill="url(#shell)"/>
+            <rect x="176" y="82" width="48" height="6" rx="3" fill="#c6f432" opacity=".85"/>
             <rect x="110" y="104" width="180" height="120" rx="48" fill="url(#visor)"/>
-            <path d="M128 124 Q150 112 176 112" stroke="#fff" stroke-opacity=".18" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <g clip-path="url(#visorClip)">
+              <rect x="110" y="104" width="180" height="10" fill="#c6f432" opacity=".07"><animate attributeName="y" values="96;224;96" dur="4s" repeatCount="indefinite"/></rect>
+            </g>
+            <path d="M128 124 Q150 112 176 112" stroke="#fff" stroke-opacity=".2" stroke-width="6" stroke-linecap="round" fill="none"/>
             <g id="eyes" filter="url(#glow)">
               <g id="eyeOpen" fill="#c6f432">
-                <rect id="eL" x="146" y="142" width="26" height="40" rx="13"/>
-                <rect id="eR" x="228" y="142" width="26" height="40" rx="13"/>
+                <rect id="eL" x="148" y="144" width="24" height="38" rx="12"/>
+                <rect id="eR" x="228" y="144" width="24" height="38" rx="12"/>
               </g>
               <g id="eyeHappy" fill="none" stroke="#c6f432" stroke-width="8" stroke-linecap="round" opacity="0">
                 <path d="M144 170 Q159 148 174 170"/><path d="M226 170 Q241 148 256 170"/>
@@ -268,6 +280,7 @@ html{scroll-padding-top:76px}
             </g>
             <ellipse id="blushL" cx="134" cy="200" rx="12" ry="6" fill="#ff8a3d" opacity="0"/>
             <ellipse id="blushR" cx="266" cy="200" rx="12" ry="6" fill="#ff8a3d" opacity="0"/>
+            <g fill="#aab2bd"><rect x="108" y="236" width="14" height="3" rx="1.5"/><rect x="108" y="243" width="10" height="3" rx="1.5"/><rect x="278" y="236" width="14" height="3" rx="1.5"/><rect x="282" y="243" width="10" height="3" rx="1.5"/></g>
           </g>
         </g>
       </svg>
