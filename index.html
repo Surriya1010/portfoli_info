@@ -1820,6 +1820,57 @@
                         </a>
                     </div>
                 </div>
+
+                <!-- VLA training-data error study -->
+                <div class="project-card">
+                    <h3 class="project-title">Which Training-Data Errors Break a VLA Policy?</h3>
+                    <div class="project-badge" style="background: linear-gradient(135deg, #00D4FF, #0099FF); color: #fff; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; margin-bottom: 1rem; display: inline-block;">
+                        <i class="fas fa-flask"></i> Research Write-up (Nov 2026 - Present)
+                    </div>
+                    <p class="project-description">A controlled study of how realistic demonstration-data errors
+                        (timestamp offsets, task-label noise, operator-style corruption) change a vision-language-action
+                        policy. One error type is injected at a time at set strengths into Franka/LIBERO data, the same
+                        smolVLA model is fine-tuned on each version, and the drop in task success is reported with seeds
+                        and 95% confidence intervals. It also tests whether cheap checks can detect each error before
+                        training. Design, related work and a tested corruption/detector library are public; experiments
+                        are in progress.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag"><i class="fas fa-brain tech-icon"></i> smolVLA</span>
+                        <span class="tech-tag"><i class="fas fa-robot tech-icon"></i> Franka / LIBERO</span>
+                        <span class="tech-tag"><i class="fas fa-database tech-icon"></i> LeRobot</span>
+                        <span class="tech-tag"><i class="fas fa-chart-line tech-icon"></i> Experiment Design</span>
+                        <span class="tech-tag"><i class="fab fa-python tech-icon"></i> PyTorch</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Surriya1010/vla-data-errors/blob/main/docs/experiment-design.md" class="project-link" target="_blank" rel="noopener">
+                            <i class="fas fa-file-alt"></i> Read the Design
+                        </a>
+                        <a href="https://github.com/Surriya1010/vla-data-errors" class="project-link" target="_blank" rel="noopener">
+                            <i class="fab fa-github"></i> Code
+                        </a>
+                    </div>
+                </div>
+
+                <!-- GR00T N1 closed-loop in Isaac Lab -->
+                <div class="project-card">
+                    <h3 class="project-title">NVIDIA GR00T N1 Closed-Loop in Isaac Lab 3.0</h3>
+                    <p class="project-description">Runs NVIDIA's 2B-parameter GR00T N1 vision-language-action model
+                        closed-loop on GR1-T2 humanoid manipulation tasks in Isaac Lab 3.0. A small localhost bridge
+                        connects the simulator (Python 3.12) to the policy server (Python 3.10), matching the reference
+                        image preprocessing, and a hold-pose baseline separates simulator cost from model inference
+                        cost.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag"><i class="fas fa-brain tech-icon"></i> GR00T N1</span>
+                        <span class="tech-tag"><i class="fas fa-cube tech-icon"></i> Isaac Lab 3.0</span>
+                        <span class="tech-tag"><i class="fas fa-robot tech-icon"></i> Humanoid (GR1-T2)</span>
+                        <span class="tech-tag"><i class="fas fa-network-wired tech-icon"></i> Policy Server</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Surriya1010/gr00t-isaaclab" class="project-link" target="_blank" rel="noopener">
+                            <i class="fab fa-github"></i> Code &amp; Write-up
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
