@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running GR00T N1 closed-loop in Isaac Lab 3.0 · Surriya Balachandar</title>
+<meta name="description" content="How I connected NVIDIA's GR00T N1 VLA to Isaac Lab 3.0 across two Python versions, with a safe localhost bridge and a hold-pose baseline.">
+<link rel="canonical" href="https://surriya.vercel.app/blog/gr00t-isaac-lab.html">
+<meta property="og:title" content="Running GR00T N1 closed-loop in Isaac Lab 3.0">
+<meta property="og:description" content="Bridging a 2B-parameter humanoid VLA and a simulator that can't share a Python process.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://surriya.vercel.app/blog/img/gr00t.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><i></i>Surriya Balachandar</a>
+  <nav><a href="/#work" class="hide-sm">work</a><a href="/blog/">blog</a><a href="/#contact">contact</a></nav>
+</div></header>
+
+<main class="wrap">
+<div class="post-head">
+  <span class="kicker">// ENGINEERING · SIMULATION · HUMANOIDS</span>
+  <h1>Running GR00T N1 closed-loop in Isaac Lab 3.0</h1>
+  <p class="dek">A 2-billion-parameter humanoid model and a simulator that can't live in the same Python process. Here's the bridge I built between them, and why I added a robot that deliberately does nothing.</p>
+  <div class="meta"><span>Nov 2026</span><span>·</span><span>5 min read</span><span>·</span><span>Status: integration runs end to end</span></div>
+</div>
+<img class="cover" src="/blog/img/gr00t.jpg" alt="Illustration: a humanoid robot and a policy server linked by two data beams" width="1600" height="900">
+
+<article>
+<div class="tldr"><b>TL;DR</b><ul>
+  <li>Goal: evaluate a released VLA checkpoint by letting it <strong>act</strong> in simulation, not just scoring it offline.</li>
+  <li>Isaac Lab 3.0 needs Python 3.12 and GR00T N1 needs 3.10, so they run as <strong>two processes joined by a small localhost bridge</strong>.</li>
+  <li>The bridge sends JSON plus numpy arrays loaded with <code>allow_pickle=False</code>, so no code can travel over the socket.</li>
+  <li>A <strong>hold-pose baseline</strong> measures the simulator's own cost before any slowdown gets blamed on the model.</li>
+</ul></div>
+
+<h2>Offline scores aren't the whole story</h2>
+<p>A lot of policy evaluation happens offline: compare predicted actions with recorded ones and compute an error. But a policy that's slightly off at every step can drift into states it has never seen, and offline numbers won't show that. The honest test is <strong>closed-loop</strong>: the model sees a frame, acts, the world changes, and it has to deal with the consequences. So I wanted NVIDIA's GR00T N1 driving the GR1-T2 humanoid inside Isaac Lab, on its manipulation tasks such as nut pouring and exhaust-pipe handling.</p>
+
+<h2>The obstacle: two Pythons</h2>
+<p>Isaac Lab 3.0 runs on Python 3.12. GR00T N1 needs its own Python 3.10 environment. You can't import both into one process, and forcing one stack onto the other's version is a fight you lose slowly. So I split them:</p>
+
+<div class="figure">
+<svg viewBox="0 0 700 190" aria-label="Bridge architecture">
+  <rect x="20" y="30" width="250" height="130" rx="12" fill="#141920" stroke="#2a323d"/>
+  <text x="40" y="58" font-size="13" fill="#5ad1ff">ISAAC LAB 3.0 · py3.12</text>
+  <text x="40" y="88" font-size="12.5" fill="#eef0f3">run_isaac_gr00t.py</text>
+  <text x="40" y="110" font-size="12" fill="#8d95a3">GR1-T2 task environment</text>
+  <text x="40" y="130" font-size="12" fill="#8d95a3">--policy hold | gr00t</text>
+  <rect x="430" y="30" width="250" height="130" rx="12" fill="#141920" stroke="#2a323d"/>
+  <text x="450" y="58" font-size="13" fill="#c6f432">GR00T N1 SERVER · py3.10</text>
+  <text x="450" y="88" font-size="12.5" fill="#eef0f3">gr00t_server.py</text>
+  <text x="450" y="110" font-size="12" fill="#8d95a3">policy.get_action()</text>
+  <text x="450" y="130" font-size="12" fill="#8d95a3">2B-parameter VLA</text>
+  <line x1="280" y1="80" x2="420" y2="80" stroke="#5ad1ff" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="350" y="70" text-anchor="middle" font-size="11.5" fill="#5ad1ff">observation (JSON + .npz) →</text>
+  <line x1="280" y1="118" x2="420" y2="118" stroke="#c6f432" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="350" y="138" text-anchor="middle" font-size="11.5" fill="#c6f432">← 16-step action chunk</text>
+  <text x="350" y="178" text-anchor="middle" font-size="11" fill="#5d6673">bridge.py · localhost · stdlib + numpy only</text>
+</svg>
+<div class="figcap">Two processes, one tiny protocol between them.</div>
+</div>
+
+<h2>The bridge, kept deliberately small</h2>
+<p><code>bridge.py</code> is the whole protocol. Each message is an 8-byte length header, then JSON metadata, then numpy arrays in <code>.npz</code> format. Two design choices mattered:</p>
+<ul>
+  <li><strong>Only the standard library and numpy.</strong> That's what lets the same file import cleanly in both environments. Any heavier dependency would have tied it to one side.</li>
+  <li><strong>No pickle.</strong> Arrays are loaded with <code>allow_pickle=False</code>. Pickle can run arbitrary code on load, so the bridge only ever carries data, even on localhost.</li>
+</ul>
+
+<h2>Matching the model's expectations</h2>
+<p>A VLA is sensitive to how its images are prepared, and a silent mismatch here makes a good model look bad. The GR1-T2 head camera produces 160×256 frames. The server zero-pads them to 256×256, matching the preprocessing in NVIDIA's reference IsaacLabEvalTasks. The model then returns a 16-step action chunk. A flag sets how many of those steps run before asking for a new chunk, which is the trade-off between reacting quickly and acting smoothly.</p>
+
+<h2>The robot that does nothing</h2>
+<p>The runner has a <code>--policy hold</code> mode that keeps the robot perfectly still. That sounds useless, but it answers a question that comes up as soon as things feel slow: <strong>is it the model or the simulator?</strong> A humanoid scene with rendering has a real cost of its own. Measure that first with the model out of the loop, and you know how much of any slowdown inference actually adds.</p>
+<pre><code># 1) policy server, in the GR00T environment
+python gr00t_server.py --model_path &lt;checkpoint&gt;
+
+# 2) simulator-only baseline: no model involved
+./isaaclab.sh -p run_isaac_gr00t.py --policy hold
+
+# 3) closed loop
+./isaaclab.sh -p run_isaac_gr00t.py --policy gr00t \
+    --task Isaac-NutPour-GR1T2-ClosedLoop-v0 --episodes 3 --chunks 30</code></pre>
+
+<h2>Where it stands, honestly</h2>
+<p>The loop runs end to end. I haven't published success rates yet, and I won't quote any until they come from fixed seeds with confidence intervals. Next:</p>
+<ul>
+  <li>Success rate per task over fixed seeds, with intervals.</li>
+  <li>How chunk length trades reactivity against success: execute 4 steps of each 16-step chunk, or all 16?</li>
+</ul>
+<blockquote>Most integration bugs don't crash. They quietly make a good model look bad. Small, checkable pieces are how you catch them.</blockquote>
+
+<div class="post-foot"><p>Integration code is public; GR00T, Isaac Sim and Isaac Lab are NVIDIA projects under their own licences.</p>
+  <a class="btn" href="https://github.com/Surriya1010/gr00t-isaaclab" target="_blank" rel="noopener">View on GitHub ↗</a></div>
+<div class="more">
+  <a href="/blog/vla-data-errors.html"><span>Related</span>Which data errors break a robot policy?</a>
+  <a href="/blog/so100-rubric.html"><span>Next</span>The rubric is part of the model: grading 100+ robot demonstrations</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><span>© 2026 Surriya Balachandar</span><a href="/blog/">← All posts</a></div></footer>
+<script>addEventListener('scroll',function(){var h=document.documentElement;document.getElementById('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'},{passive:true})</script>
+</body>
+</html>

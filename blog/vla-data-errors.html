@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which data errors break a robot policy? · Surriya Balachandar</title>
+<meta name="description" content="Designing a controlled study of realistic training-data errors on a SmolVLA policy for a simulated Franka arm: timing offsets, wrong task labels and operator noise.">
+<link rel="canonical" href="https://surriya.vercel.app/blog/vla-data-errors.html">
+<meta property="og:title" content="Which data errors break a robot policy?">
+<meta property="og:description" content="Designing a controlled study of realistic training-data errors on a vision-language-action policy.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://surriya.vercel.app/blog/img/vla.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><i></i>Surriya Balachandar</a>
+  <nav><a href="/#work" class="hide-sm">work</a><a href="/blog/">blog</a><a href="/#contact">contact</a></nav>
+</div></header>
+
+<main class="wrap">
+<div class="post-head">
+  <span class="kicker">// RESEARCH DESIGN · VLA · DATA QUALITY</span>
+  <h1>Which data errors break a robot policy?</h1>
+  <p class="dek">Real robot data is always slightly wrong. I'm designing a study that measures which kinds of wrong actually matter, in simulation, where the truth is known.</p>
+  <div class="meta"><span>Nov 2026</span><span>·</span><span>7 min read</span><span>·</span><span>Status: setup, no results yet</span></div>
+</div>
+<img class="cover" src="/blog/img/vla.jpg" alt="Illustration: robot demonstration frames on a filmstrip, one glitched, feeding a neural network" width="1600" height="900">
+
+<article>
+<div class="tldr"><b>TL;DR</b><ul>
+  <li>Take clean Franka demonstrations from LIBERO, add <strong>one realistic error type at a time</strong> at controlled strengths, fine-tune the same SmolVLA on each copy, and measure the drop in task success.</li>
+  <li>Three error types first: <strong>action/observation time offset</strong>, <strong>wrong task labels</strong> and <strong>operator jitter</strong>.</li>
+  <li>The study also asks whether <strong>cheap, label-free checks</strong> can catch each error before any GPU time is spent on training.</li>
+  <li>Everything runs on one 8 GB laptop GPU. No experiment has run yet; this post is the design.</li>
+</ul></div>
+
+<h2>The problem nobody can measure on real data</h2>
+<p>Every real robot dataset carries small errors. Camera frames and joint readings are captured at slightly different moments. Episodes get saved under the wrong task name. Teleoperators move hesitantly or shakily. Everyone working with robot data knows this. What's missing is a way to say <em>how much each of these costs</em>.</p>
+<p>On real data you can't answer that, because you never know the true values. You can't tell how far off your timestamps are, or how many labels are wrong. Simulation flips this around: if I start from clean demonstrations and inject the error myself, I know exactly where it is and how big it is. That makes it possible to measure cause and effect.</p>
+
+<div class="figure">
+<svg viewBox="0 0 700 170" aria-label="Study pipeline">
+  <g font-size="12">
+    <rect x="10" y="50" width="120" height="60" rx="10" fill="#161c24" stroke="#2a323d"/><text x="70" y="78" text-anchor="middle" fill="#eef0f3">clean LIBERO</text><text x="70" y="96" text-anchor="middle" fill="#8d95a3">demos</text>
+    <rect x="150" y="50" width="130" height="60" rx="10" fill="#1c1510" stroke="#ff8a3d"/><text x="215" y="78" text-anchor="middle" fill="#ff8a3d">inject 1 error</text><text x="215" y="96" text-anchor="middle" fill="#8d95a3">× strength</text>
+    <rect x="300" y="50" width="120" height="60" rx="10" fill="#161c24" stroke="#2a323d"/><text x="360" y="78" text-anchor="middle" fill="#eef0f3">fine-tune</text><text x="360" y="96" text-anchor="middle" fill="#8d95a3">SmolVLA</text>
+    <rect x="440" y="50" width="120" height="60" rx="10" fill="#161c24" stroke="#2a323d"/><text x="500" y="78" text-anchor="middle" fill="#eef0f3">evaluate</text><text x="500" y="96" text-anchor="middle" fill="#8d95a3">success ± CI</text>
+    <rect x="580" y="50" width="110" height="60" rx="10" fill="#12180a" stroke="#c6f432"/><text x="635" y="78" text-anchor="middle" fill="#c6f432">dose–response</text><text x="635" y="96" text-anchor="middle" fill="#8d95a3">chart</text>
+    <g stroke="#5d6673" stroke-width="1.5"><line x1="130" y1="80" x2="150" y2="80"/><line x1="280" y1="80" x2="300" y2="80"/><line x1="420" y1="80" x2="440" y2="80"/><line x1="560" y1="80" x2="580" y2="80"/></g>
+    <path d="M215 110 V145 H635 V110" fill="none" stroke="#5ad1ff" stroke-dasharray="4 5"/><text x="425" y="160" text-anchor="middle" fill="#5ad1ff">detectors run on every dataset copy: can they spot the error?</text>
+  </g>
+</svg>
+<div class="figcap">The study loop, repeated for each error type and strength.</div>
+</div>
+
+<h2>Three questions</h2>
+<ol>
+  <li><strong>Dose-response:</strong> for each error type, how does task success change as the error gets stronger?</li>
+  <li><strong>Ranking:</strong> under the same training budget, which error types cost the most?</li>
+  <li><strong>Detection:</strong> can simple checks that need no labels find each error, measured against errors I placed myself?</li>
+</ol>
+
+<h2>The errors, and why these ones</h2>
+<div class="table"><table>
+<tr><th>Error</th><th>What it simulates</th><th>How it's injected</th><th>Strengths</th></tr>
+<tr><td><strong>Time offset</strong></td><td>Camera and command streams logged slightly out of sync</td><td>Row <em>t</em> gets the action from row <em>t−k</em>; video and state untouched</td><td>k = 1, 2, 4 frames</td></tr>
+<tr><td><strong>Wrong task label</strong></td><td>Episodes saved under the wrong task name</td><td>A fraction <em>p</em> of episodes get another task's label from the same suite</td><td>p = 0.1, 0.25, 0.5</td></tr>
+<tr><td><strong>Operator jitter</strong></td><td>Shaky teleoperation</td><td>Gaussian noise on the 6 arm action dims, scaled to each dim's spread; gripper untouched</td><td>s = 0.1, 0.25, 0.5</td></tr>
+<tr><td>Calibration offset <em>(optional)</em></td><td>Miscalibrated end-effector position</td><td>Constant offset on the state position</td><td>5 mm, 20 mm</td></tr>
+</table></div>
+<p>Timing offsets come up again and again as a real-data problem, but they're rarely measured on <em>training</em> data, so that's the most interesting one. Wrong labels are the language-side counterpart, which matters for a model that's conditioned on an instruction. Jitter is deliberately the boring one: earlier work has already shown that action noise hurts, so if my pipeline <em>doesn't</em> show that, the pipeline is broken. It's a built-in sanity check.</p>
+
+<h2>Keeping the comparison fair</h2>
+<p>An experiment like this falls apart if anything other than the data changes between conditions. So the training recipe is locked:</p>
+<ul>
+  <li>Every run starts from <code>smolvla_base</code>, never from the LIBERO checkpoint, which has already seen clean data.</li>
+  <li>Same suite, same episodes, same number of steps, same batch size, same seed. The budget is fixed once, before any corrupted run, and never touched again.</li>
+  <li>The baseline is <strong>my own clean fine-tune</strong> with that exact recipe, not the published checkpoint.</li>
+  <li>Evaluation uses the same execution horizon for every condition, because SmolVLA's LIBERO score moves a lot with it.</li>
+</ul>
+
+<h2>Designing around an 8 GB GPU</h2>
+<p>The hardware constraint shaped the whole study. I compared the VLAs with LIBERO checkpoints on the Hugging Face Hub. SmolVLA (450M parameters) was the only one that could also be <em>fine-tuned</em> in 8 GB. Models in the 3 to 7 billion parameter range, such as pi0.5, GR00T N1.6 and OpenVLA-OFT, are out of reach for training here. To fit, I scoped training and evaluation to one LIBERO suite, <code>libero_object</code>. I chose it because published models score highest there, so a clean policy sits well above zero and any damage from the errors has room to show.</p>
+<div class="callout">The biggest risk is a clean baseline that barely works. If the clean fine-tune sits near 0% success, no error can visibly make it worse, and the whole study is inconclusive. So the protocol checks this first, and adjusts the budget or suite before running a single corrupted condition.</div>
+
+<h2>Detecting errors before training</h2>
+<p>Training is the expensive part. If a cheap check over the dataset can flag a problem first, that's worth a lot in practice. Three detectors, all plain numpy:</p>
+<ul>
+  <li><strong>Lag estimator:</strong> finds the shift that best lines up the commanded arm motion with the motion that actually happens next. It targets the time offset.</li>
+  <li><strong>Jitter score:</strong> the share of action energy at high frequency. It targets operator noise.</li>
+  <li><strong>Stall runs:</strong> the longest stretch of near-zero motion, for operator hesitation. This one is reported but not injected.</li>
+</ul>
+<p>Wrong task labels can't be detected from motion alone. I'm listing that openly as a gap rather than pretending a detector covers it.</p>
+
+<h2>Where it stands</h2>
+<p>The corruption and detector library passes 13 unit tests on synthetic episodes. The dataset-corruption script works on a small fake dataset in the LeRobot v3 layout, and the Isaac Lab Franka control part runs on the laptop. Next: install the LeRobot environment, check that the official checkpoint reproduces its published score, then run the clean control.</p>
+
+<h2>Rules I'm holding myself to</h2>
+<ul>
+  <li>No number gets reported without the command, seed, dataset revision and episode count behind it.</li>
+  <li>Every success rate comes with a 95% interval. Overlapping intervals mean "no difference shown", not "no difference".</li>
+  <li>If an error type has no effect, that's a result. I'll report it along with the smallest effect the experiment could have detected.</li>
+</ul>
+<blockquote>The point isn't to prove that dirty data is bad. It's to find out which dirt is worth cleaning.</blockquote>
+
+<div class="post-foot"><p>The full design, related work and code are public.</p>
+  <a class="btn" href="https://github.com/Surriya1010/vla-data-errors" target="_blank" rel="noopener">View on GitHub ↗</a></div>
+<div class="more">
+  <a href="/blog/so100-rubric.html"><span>Related</span>The rubric is part of the model: grading 100+ robot demonstrations</a>
+  <a href="/blog/gr00t-isaac-lab.html"><span>Next</span>Running GR00T N1 closed-loop in Isaac Lab 3.0</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><span>© 2026 Surriya Balachandar</span><a href="/blog/">← All posts</a></div></footer>
+<script>addEventListener('scroll',function(){var h=document.documentElement;document.getElementById('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'},{passive:true})</script>
+</body>
+</html>

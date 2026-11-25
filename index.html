@@ -142,6 +142,15 @@ p{margin:0 0 14px}
 @keyframes ping{0%{r:4;opacity:.9}100%{r:28;opacity:0}}
 .ping{animation:ping 1.8s ease-out infinite}
 
+.posts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.post{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:24px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);transition:border-color .25s,transform .25s}
+.post:hover{border-color:#2f3845;transform:translateY(-3px)}
+.post img{width:calc(100% + 48px);margin:-24px -24px 6px;height:auto;aspect-ratio:16/9;object-fit:cover;border-bottom:1px solid var(--line)}
+.post{overflow:hidden}
+.post p{color:var(--muted);font-size:15px;margin:0;flex:1}
+.post .go{font:500 13px var(--mono);color:var(--lime)}
+@media (max-width:900px){.posts{grid-template-columns:1fr}}
+
 /* experience */
 .tl{position:relative;padding-left:28px}
 .tl::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:1px;background:linear-gradient(var(--lime),var(--line))}
@@ -207,6 +216,7 @@ html{scroll-padding-top:76px}
       <li><a href="#work"><span>02</span>work</a></li>
       <li><a href="#experience"><span>03</span>experience</a></li>
       <li><a href="#skills"><span>04</span>skills</a></li>
+      <li><a href="/blog/"><span>✎</span>blog</a></li>
       <li><a href="#contact"><span>05</span>contact</a></li>
     </ul></nav>
   </div>
@@ -500,6 +510,16 @@ html{scroll-padding-top:76px}
         <div class="tags"><span>ROS 2</span><span>Stereo depth</span><span>SLAM</span></div>
       </article>
 
+    </div>
+  </section>
+
+  <section id="writing" class="wrap">
+    <div class="sec-head reveal"><div><span class="kicker">// writing</span><h2>From the blog</h2></div>
+      <a class="date" href="/blog/">All posts →</a></div>
+    <div class="posts">
+      <a class="post reveal" href="/blog/vla-data-errors.html"><img src="/blog/img/vla-sm.jpg" alt="" width="800" height="450" loading="lazy"><span class="chip">Research design</span><h3>Which data errors break a robot policy?</h3><p>Timing offsets, wrong labels and operator jitter on a SmolVLA policy, measured in simulation where the truth is known.</p><span class="go">7 min read →</span></a>
+      <a class="post reveal" href="/blog/gr00t-isaac-lab.html"><img src="/blog/img/gr00t-sm.jpg" alt="" width="800" height="450" loading="lazy"><span class="chip c">Engineering</span><h3>Running GR00T N1 closed-loop in Isaac Lab 3.0</h3><p>A two-Python bridge for a 2B-parameter humanoid VLA, and why the robot that does nothing is the best baseline.</p><span class="go">5 min read →</span></a>
+      <a class="post reveal" href="/blog/so100-rubric.html"><img src="/blog/img/so100-sm.jpg" alt="" width="800" height="450" loading="lazy"><span class="chip o">Data curation</span><h3>The rubric is part of the model</h3><p>Grading 100+ robot demonstrations frame by frame, and tracing policy failures back to the data.</p><span class="go">6 min read →</span></a>
     </div>
   </section>
 

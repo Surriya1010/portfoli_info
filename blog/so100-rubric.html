@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The rubric is part of the model · Surriya Balachandar</title>
+<meta name="description" content="How I graded 100+ teleoperated SO-100 demonstrations frame by frame, wrote the acceptance criteria, and traced policy failures back to the data.">
+<link rel="canonical" href="https://surriya.vercel.app/blog/so100-rubric.html">
+<meta property="og:title" content="The rubric is part of the model">
+<meta property="og:description" content="Grading 100+ robot demonstrations, and what boundary decisions do to a trained policy.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://surriya.vercel.app/blog/img/so100.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><i></i>Surriya Balachandar</a>
+  <nav><a href="/#work" class="hide-sm">work</a><a href="/blog/">blog</a><a href="/#contact">contact</a></nav>
+</div></header>
+
+<main class="wrap">
+<div class="post-head">
+  <span class="kicker">// DATA CURATION · IMITATION LEARNING · SO-100</span>
+  <h1>The rubric is part of the model</h1>
+  <p class="dek">I graded more than 100 teleoperated robot demonstrations frame by frame. The most important thing I built wasn't the policy. It was the written standard that decided what the policy got to learn from.</p>
+  <div class="meta"><span>Sep – Dec 2025 project</span><span>·</span><span>6 min read</span></div>
+</div>
+<img class="cover" src="/blog/img/so100.jpg" alt="Illustration: a robot arm stacking cubes under a grid of graded demonstration clips" width="1600" height="900">
+
+<article>
+<div class="tldr"><b>TL;DR</b><ul>
+  <li>Task: multi-stage object stacking on the SO-100 arm. I collected 100+ teleoperated episodes and trained ACT with SmolVLA pre-training.</li>
+  <li>Every episode was split into <strong>five phases</strong> and scored against <strong>eight criteria</strong> as Pass, Borderline or Fail. Any Fail meant reject.</li>
+  <li>The hard part was the <strong>edge cases</strong>: a slipped-then-recovered grasp, an object that drifts after release, an operator who pauses.</li>
+  <li>Any rubric change meant <strong>re-grading every earlier episode</strong>. A dataset graded against two standards is effectively unlabelled.</li>
+</ul></div>
+
+<h2>Why a written standard</h2>
+<p>Imitation learning copies what it sees. Show it a hesitant grasp and it learns hesitation. Show it a "success" where the stack wobbles off a second later, and it learns that's fine. So the question "which episodes go in the training set?" is a modelling decision, not a cleaning chore. I wanted every one of those decisions to be <strong>written down, consistent and auditable</strong>, not made by feel at 1 a.m. on episode 87.</p>
+
+<div class="figure">
+<svg viewBox="0 0 700 200" aria-label="Curation pipeline">
+  <g font-size="12">
+    <rect x="10" y="40" width="110" height="52" rx="10" fill="#161c24" stroke="#2a323d"/><text x="65" y="70" text-anchor="middle" fill="#eef0f3">teleop</text>
+    <rect x="140" y="40" width="130" height="52" rx="10" fill="#161c24" stroke="#2a323d"/><text x="205" y="62" text-anchor="middle" fill="#eef0f3">frame-by-frame</text><text x="205" y="79" text-anchor="middle" fill="#8d95a3">review</text>
+    <rect x="290" y="40" width="120" height="52" rx="10" fill="#12180a" stroke="#c6f432"/><text x="350" y="62" text-anchor="middle" fill="#c6f432">grade vs</text><text x="350" y="79" text-anchor="middle" fill="#c6f432">rubric</text>
+    <rect x="440" y="10" width="110" height="40" rx="8" fill="#161c24" stroke="#c6f432"/><text x="495" y="35" text-anchor="middle" fill="#c6f432">accept → train</text>
+    <rect x="440" y="82" width="110" height="40" rx="8" fill="#1c1510" stroke="#ff8a3d"/><text x="495" y="107" text-anchor="middle" fill="#ff8a3d">reject + code</text>
+    <rect x="575" y="10" width="115" height="40" rx="8" fill="#161c24" stroke="#2a323d"/><text x="632" y="35" text-anchor="middle" fill="#eef0f3">ACT + SmolVLA</text>
+    <rect x="440" y="148" width="250" height="40" rx="8" fill="#101a1f" stroke="#5ad1ff"/><text x="565" y="173" text-anchor="middle" fill="#5ad1ff">rollout failure diagnosis</text>
+    <g stroke="#5d6673" stroke-width="1.5" fill="none"><path d="M120 66 H140"/><path d="M270 66 H290"/><path d="M410 60 L440 30"/><path d="M410 72 L440 102"/><path d="M550 30 H575"/><path d="M632 50 V148"/></g>
+    <path d="M440 168 H205 V92" fill="none" stroke="#5ad1ff" stroke-dasharray="4 5"/><text x="215" y="160" fill="#5ad1ff">revise rubric → re-grade ALL</text>
+  </g>
+</svg>
+<div class="figcap">Curation is a loop: what the policy gets wrong feeds back into the standard.</div>
+</div>
+
+<h2>Step 1: cut every episode into phases</h2>
+<p>You can't grade "the episode" as one blob. Each one was segmented into sub-actions, with a single rule for boundaries: <strong>a phase starts on the first frame where its start condition holds.</strong> One rule, applied everywhere, is what makes two people (or me on two different days) put the boundary on the same frame.</p>
+<div class="table"><table>
+<tr><th>Phase</th><th>Starts when</th><th>Ends when</th></tr>
+<tr><td>Approach</td><td>Arm starts moving toward the object</td><td>Gripper is around the object, not yet closing</td></tr>
+<tr><td>Grasp</td><td>Gripper starts closing</td><td>Object lifted clear and held stably</td></tr>
+<tr><td>Transport</td><td>Object leaves the surface</td><td>Object is above the target stack</td></tr>
+<tr><td>Place</td><td>Downward motion onto the stack begins</td><td>Object rests on the stack</td></tr>
+<tr><td>Release &amp; retreat</td><td>Gripper starts opening</td><td>Gripper clear, stack still</td></tr>
+</table></div>
+
+<h2>Step 2: eight criteria, three grades</h2>
+<p>Each criterion scores Pass, Borderline or Fail. Any single Fail disqualifies the episode, and too many Borderlines do too. The criteria cover completion, approach, grasp, object control, placement, release, whether the boundaries can be marked at all, and whether the recording itself is valid. Three failure types needed especially sharp definitions:</p>
+<ul>
+  <li><strong>Partial grasp:</strong> the object is held by an edge, slips or is dropped.</li>
+  <li><strong>Object drift:</strong> the object shifts in the gripper, or on the stack after placement.</li>
+  <li><strong>Unstable approach:</strong> oscillation, repeated aborts, or contact before the grasp.</li>
+</ul>
+
+<h2>Step 3: rule on the edge cases once</h2>
+<p>The clear successes and clear failures are easy. The project lived or died on the ambiguous ones, so each got a written ruling with a reason:</p>
+<div class="table"><table>
+<tr><th>Situation</th><th>Ruling</th><th>Why</th></tr>
+<tr><td>Grasp slips, then recovers within the phase</td><td>Borderline</td><td>Recovery is useful to show, but too much of it teaches hesitation</td></tr>
+<tr><td>Object lands right, then drifts after release</td><td>Fail</td><td>The end state isn't stable, so it would teach a false "success"</td></tr>
+<tr><td>Operator pauses mid-transport</td><td>Pass, if motion resumes on the same path</td><td>A pause isn't an error; a changed path is</td></tr>
+<tr><td>Task done in a different valid order</td><td>Fail</td><td>The policy must learn the instructed order</td></tr>
+</table></div>
+
+<h2>Step 4: never let the standard drift</h2>
+<p>Halfway through a long review, you sharpen a definition. The tempting move is to apply it from here on. That's how you end up with a dataset where episode 20 and episode 80 were judged by different rules, and the model gets contradictory lessons. My rule: <strong>every rubric change means re-grading every episode already reviewed.</strong> Each grade logs the rubric version, and each reject carries a criterion code and the frame number where the failure starts, so anyone can audit it.</p>
+
+<h2>Step 5: read the failures backwards</h2>
+<p>After training ACT with SmolVLA pre-training, I watched the rollouts and sorted failures into two kinds, because they point to different fixes:</p>
+<div class="table"><table>
+<tr><th>Failure</th><th>What it looks like</th><th>Data-side fix</th></tr>
+<tr><td><strong>Perception error</strong></td><td>Arm moves confidently to the wrong place, or picks the wrong object</td><td>Check coverage of lighting, camera pose and occlusion; check recording validity</td></tr>
+<tr><td><strong>Trajectory error</strong></td><td>Right target, poor motion: hesitation, overshoot, failed grasp</td><td>Tighten approach, grasp and control criteria; remove borderline demos of that phase</td></tr>
+</table></div>
+
+<blockquote>Boundary decisions and accept/reject strictness flow straight into the policy's behaviour. The rubric is part of the model.</blockquote>
+
+<p>This is also why I'm now running a controlled study of data errors on a VLA. On real data like this I could see that the data mattered, but I couldn't measure by how much. In simulation, I can.</p>
+
+<div class="post-foot"><p>Interested in data quality for robot learning? I'd like to hear from you.</p>
+  <a class="btn" href="mailto:bsurriya.work@gmail.com">Get in touch</a></div>
+<div class="more">
+  <a href="/blog/vla-data-errors.html"><span>Next</span>Which data errors break a robot policy?</a>
+  <a href="/blog/gr00t-isaac-lab.html"><span>Also</span>Running GR00T N1 closed-loop in Isaac Lab 3.0</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><span>© 2026 Surriya Balachandar</span><a href="/blog/">← All posts</a></div></footer>
+<script>addEventListener('scroll',function(){var h=document.documentElement;document.getElementById('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'},{passive:true})</script>
+</body>
+</html>
