@@ -159,7 +159,19 @@ p{margin:0 0 14px}
 footer{padding-block:36px;font:400 12.5px var(--mono);color:var(--muted)}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+html{scroll-padding-top:76px}
+.card,.btn,.stat,.skill{will-change:transform}
+.tldr{display:flex;gap:10px;align-items:flex-start;font:500 14px/1.5 var(--sans);color:var(--ink);background:rgba(198,244,50,.05);
+  border-left:2px solid var(--lime);padding:10px 12px;border-radius:0 8px 8px 0;margin:0 0 14px}
+.card .tldr{color:var(--ink)}
+.tldr b{font:500 10.5px/1.9 var(--mono);color:var(--lime);letter-spacing:.06em;flex:none}
+.glance{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-block:0 56px}
+.glance div{background:var(--card);padding:20px 22px}
+.glance b{display:block;font:500 11px var(--mono);color:var(--lime);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.glance span{font-size:15px;line-height:1.45;color:var(--ink)}
+@media (max-width:900px){.glance{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.glance{grid-template-columns:1fr}}
 .reveal.in{opacity:1;transform:none}
 
 @media (max-width:900px){
@@ -262,6 +274,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     </div>
   </div>
 
+  <div class="wrap"><div class="glance reveal" aria-label="At a glance">
+    <div><b>Looking for</b><span>Research internships, part-time or contract roles in robot learning, data &amp; evaluation</span></div>
+    <div><b>Availability</b><span>Remote · 20–30 h/week in term<br>Full-time Jul–Sep, any location</span></div>
+    <div><b>Strongest in</b><span>Demo-data curation, VLA / imitation-learning evaluation, ROS 2 navigation</span></div>
+    <div><b>Education</b><span>M.Sc. Advanced Robotics, Centrale Nantes (2026–28)</span></div>
+  </div></div>
   <div class="ticker" aria-hidden="true"><div>
     <span>Imitation learning</span><span>Vision-language-action</span><span>ACT · smolVLA · GR00T N1</span><span>Dataset curation</span><span>Policy evaluation</span><span>ROS 2</span><span>SLAM</span><span>Isaac Lab</span><span>Open-RMF · VDA 5050</span><span>Stereo depth</span>
     <span>Imitation learning</span><span>Vision-language-action</span><span>ACT · smolVLA · GR00T N1</span><span>Dataset curation</span><span>Policy evaluation</span><span>ROS 2</span><span>SLAM</span><span>Isaac Lab</span><span>Open-RMF · VDA 5050</span><span>Stereo depth</span>
@@ -319,6 +337,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           </div>
           <div class="top"><span class="chip">Research · in progress</span><span class="date">Nov 2026 – present</span></div>
           <h3>Which training-data errors break a VLA policy?</h3>
+        <p class="tldr"><b>TL;DR</b>Measures which real-world data errors hurt a robot policy most, and whether cheap checks catch them first.</p>
           <p>A controlled study of how realistic demonstration-data errors (timestamp offsets, task-label noise,
             operator-style corruption) change a vision-language-action policy. Each error is injected on its own, at
             set strengths, into Franka/LIBERO data. The same smolVLA model is fine-tuned on each version, and the drop
@@ -363,6 +382,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         </div>
         <div class="top"><span class="chip c">Simulation</span><span class="date">Nov 2026</span></div>
         <h3>NVIDIA GR00T N1 closed-loop in Isaac Lab 3.0</h3>
+        <p class="tldr"><b>TL;DR</b>Got a 2B-parameter humanoid foundation model running closed-loop in simulation, across two Python stacks.</p>
         <p>Runs NVIDIA's 2B-parameter GR00T N1 VLA closed-loop on GR1-T2 humanoid manipulation tasks. A localhost
           bridge connects the simulator (Python 3.12) to the policy server (Python 3.10) and matches the reference
           image preprocessing, with a hold-pose baseline mode for comparison.</p>
@@ -397,6 +417,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         </div>
         <div class="top"><span class="chip">Data &amp; evaluation</span><span class="date">Sep – Dec 2025</span></div>
         <h3>Dataset curation &amp; policy evaluation on the SO-100 arm</h3>
+        <p class="tldr"><b>TL;DR</b>Wrote the quality standard, graded 100+ robot demos against it, and diagnosed the trained policy's failures.</p>
         <ul>
           <li>Reviewed 100+ teleoperated episodes of a multi-stage stacking task frame by frame against written accept/reject criteria.</li>
           <li>Wrote the criteria: completion, sub-action boundaries, and which near-misses disqualify an episode.</li>
@@ -422,6 +443,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         </div>
         <div class="top"><span class="chip c">Fleet robotics</span><span class="date">Jan – Apr 2025</span></div>
         <h3>Multi-robot coordination with Open-RMF</h3>
+        <p class="tldr"><b>TL;DR</b>Coordinated a mixed robot fleet on industry standards: ~30% better task effectiveness in real tests.</p>
         <p>A heterogeneous fleet coordinated through Open-RMF for collision-free industrial operation, with VDA 5050
           fleet communication, Micro-ROS on low-level devices and Zenoh between robots. Task effectiveness improved
           by about 30% in real-world testing.</p>
@@ -449,6 +471,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         </div>
         <div class="top"><span class="chip o">🏆 Judge's Choice Award</span><span class="date">2023 – 24</span></div>
         <h3>Self-driving autonomous wheelchair</h3>
+        <p class="tldr"><b>TL;DR</b>Low-cost autonomous wheelchair with depth-camera obstacle detection; award-winning, top 10 of 299.</p>
         <p>A low-cost retrofit for people with upper-body weakness, funded through the Harvard Medical School
           Innovation Challenges: stereo-depth obstacle detection, floor mapping and automated lift access for
           multi-level indoor navigation. Top 10 of 299 teams at the e-Yantra National Finals, IIT Bombay.</p>
@@ -513,7 +536,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
   /* scroll reveal */
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
-  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+  document.querySelectorAll('.reveal').forEach(function(el){var sib=[].filter.call(el.parentNode.children,function(c){return c.classList.contains('reveal')});el.style.setProperty('--d',Math.min(sib.indexOf(el),5)*0.08+'s');io.observe(el)});
 
   /* card spotlight */
   document.querySelectorAll('.card').forEach(function(c){
@@ -527,7 +550,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   var head=$('head'),eyes=$('eyes'),body=$('body'),armL=$('armL'),armR=$('armR'),ant=$('antenna'),
       open=$('eyeOpen'),happy=$('eyeHappy'),bL=$('blushL'),bR=$('blushR'),say=$('say'),shadow=$('shadow');
   var tx=0,ty=0,x=0,y=0,last=0,blink=1,nextBlink=1500,mood=0,moodT=0,wave=0;
-  var lines=['hi! 👋','I like clean data.','hire my human →','beep boop.','that link looks fun!'];
+  var lines=['Hi! I\'m Surriya\'s robot.','Clean data → better robots.','Scroll down for projects ↓','Remote · 20–30 h/week','Open to research roles!'];
 
   addEventListener('pointermove',function(e){
     var r=svg.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height*.36;
